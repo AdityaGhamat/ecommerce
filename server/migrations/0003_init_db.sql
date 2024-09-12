@@ -1,0 +1,1 @@
+ALTER TABLE "product" ALTER COLUMN "product_price" SET DATA TYPE integer;
