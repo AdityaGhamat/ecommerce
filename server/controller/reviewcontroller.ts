@@ -13,7 +13,7 @@ export async function createReview(c: Context, body: createReviewType) {
       .insert(review)
       .values({
         user_id: user_id as string,
-        product_id,
+        product_id: product_id as string,
         rating,
         review: reviews,
       })

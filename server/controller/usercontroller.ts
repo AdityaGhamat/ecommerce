@@ -159,11 +159,11 @@ export async function updateEmail(c: Context, body: updateEmailType) {
 }
 
 export async function updatePassword(c: Context, body: updatePasswordType) {
-  const { password, user_id } = body;
+  const { password, user_id, old_password } = body;
   try {
     //check if user already exists
     const [userCheck] = await db
-      .select({ user_id: user.user_id })
+      .select()
       .from(user)
       .where(eq(user.user_id, user_id as string))
       .limit(1)
@@ -171,6 +171,25 @@ export async function updatePassword(c: Context, body: updatePasswordType) {
     if (!userCheck) {
       return c.json(errorResponse("User not found", StatusCodes.NOT_FOUND));
     }
+    //checking if the old password is same as new password
+    if (old_password === password) {
+      c.status(StatusCodes.CONFLICT);
+      return c.json(
+        errorResponse(
+          "New password cannot be the old password",
+          StatusCodes.CONFLICT
+        )
+      );
+    }
+    //chekcing old password is correct or not
+    const old_password_check = await verify(old_password, userCheck.password);
+    if (!old_password_check) {
+      c.status(StatusCodes.BAD_REQUEST);
+      return c.json(
+        errorResponse("Old password is incorrect", StatusCodes.BAD_REQUEST)
+      );
+    }
+
     //encrypt password
     const encryptedPass = await hash(password);
     //update password

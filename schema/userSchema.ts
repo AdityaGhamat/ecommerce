@@ -15,5 +15,7 @@ export const updateEmailSchema = z.object({
   email: z.string().email().min(5).max(25),
 });
 export const updatePasswordSchema = z.object({
+  user_id: z.string().uuid().optional(),
+  old_password: z.string().min(6).max(25),
   password: z.string().min(6).max(25),
 });

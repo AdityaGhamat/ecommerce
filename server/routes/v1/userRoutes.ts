@@ -36,9 +36,9 @@ app.put("/username", zValidator("json", updateUserNameSchema), async (c) => {
   return updateUsername(c, body);
 });
 app.put("/password", zValidator("json", updatePasswordSchema), async (c) => {
-  const { password } = c.req.valid("json");
+  const { password, old_password } = c.req.valid("json");
   const user_id = c.get("user_id");
-  const body = { password, user_id };
+  const body = { password, user_id, old_password };
   return updatePassword(c, body);
 });
 app.put("/email", zValidator("json", updateEmailSchema), async (c) => {
