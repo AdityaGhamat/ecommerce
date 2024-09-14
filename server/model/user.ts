@@ -15,6 +15,21 @@ const user = pgTable(
     email: varchar("email", { length: 255 }).unique().notNull(),
     password: varchar("password", { length: 255 }).notNull(),
     user_type: userenum("userEnum").default("customer").notNull(),
+    reset_password_token: varchar("reset_password_token", { length: 255 }),
+    reset_password_token_expires_at: timestamp(
+      "reset_password_token_expires_at",
+      {
+        mode: "date",
+        precision: 3,
+        withTimezone: true,
+      }
+    ),
+    verification_token: varchar("verification_token", { length: 255 }),
+    verification_token_expires_at: timestamp("verification_token_expires_at", {
+      mode: "date",
+      precision: 3,
+      withTimezone: true,
+    }),
     createdAt: timestamp("createdAt", {
       mode: "date",
       precision: 3,

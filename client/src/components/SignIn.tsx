@@ -13,34 +13,49 @@ import { Button } from "@/components/ui/button";
 import { SignInProps } from "@/types/authentication";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
+import { validateLogin } from "@/validations/UserValidation";
+import { useNavigate } from "@tanstack/react-router";
 
 const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const loginToggle = () => {
     setIsLogin(!isLogin);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validateSubmission = validateLogin(email, password);
+    if (!validateSubmission.success) {
+      validateSubmission.errors.forEach((error: any) =>
+        toast({ title: "Validation Error", description: error.message })
+      );
+      return;
+    }
     try {
-      const response = await axios.post("/api/v1/user/login", {
+      const { data } = await axios.post("/api/v1/user/login", {
         email,
         password,
       });
-      if (response.data.success) {
-        toast({
-          title: "Login Successful",
-          description: response.data.message || "Welcome back!",
-        });
+      toast({
+        title: data.success ? "Login Successful" : "Login Failed",
+        description:
+          data.message ||
+          (data.success ? "Welcome back!" : "Something went wrong"),
+      });
+      if (data.success) {
+        navigate({ to: "/" });
       }
-      console.log(response.data);
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Something went wrong",
+        description: error.response?.data?.message || "Something went wrong",
       });
     }
   };
+
   return (
     <Card className="w-[300px] md:w-[450px]">
       <CardHeader>
@@ -53,13 +68,16 @@ const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
         <form onSubmit={handleSubmit}>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="md:text-md">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="md:text-md"
                 required
               />
             </div>
@@ -82,8 +100,11 @@ const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
           <Button className="w-full" onClick={handleSubmit}>
             Sign In
           </Button>
-          <span className="cursor-pointer" onClick={loginToggle}>
-            Not have an account
+          <span className="">
+            Not have an account!{" "}
+            <span className="cursor-pointer underline" onClick={loginToggle}>
+              SignUp
+            </span>
           </span>
         </div>
       </CardFooter>

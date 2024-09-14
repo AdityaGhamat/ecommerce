@@ -81,12 +81,14 @@ export async function loginuser(c: Context, body: loginUser) {
       .execute();
 
     if (!existingEmail) {
+      c.status(StatusCodes.NOT_FOUND);
       return c.json(errorResponse(`Email not found`, StatusCodes.NOT_FOUND));
     }
 
     // Verifying password
     const passwordCheck = await verify(existingEmail.password, password);
     if (!passwordCheck) {
+      c.status(StatusCodes.UNAUTHORIZED);
       return c.json(
         errorResponse(`Invalid password`, StatusCodes.UNAUTHORIZED)
       );
@@ -102,6 +104,7 @@ export async function loginuser(c: Context, body: loginUser) {
     setCookie(c, "Authorization", token, cookieOptions);
 
     // Returning response
+    c.status(StatusCodes.ACCEPTED);
     return c.json(
       successResponse("Login successfull", { token }, StatusCodes.ACCEPTED)
     );
@@ -254,6 +257,33 @@ export async function updateUsername(c: Context, body: updateUsernameType) {
       c.status(StatusCodes.NOT_FOUND);
       return c.json(errorResponse(error.message, error.status));
     }
+    c.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    return c.json(
+      errorResponse(error.message, StatusCodes.INTERNAL_SERVER_ERROR)
+    );
+  }
+}
+
+export async function getUser(c: Context, user_id: string) {
+  try {
+    const [userProfile] = await db
+      .select()
+      .from(user)
+      .where(eq(user.user_id, user_id))
+      .execute();
+    if (!userProfile) {
+      c.status(StatusCodes.NOT_FOUND);
+      return c.json(errorResponse("User not found", StatusCodes.NOT_FOUND));
+    }
+    c.status(StatusCodes.OK);
+    return c.json(
+      successResponse(
+        "Successfully got user profile",
+        { userProfile },
+        StatusCodes.OK
+      )
+    );
+  } catch (error: any) {
     c.status(StatusCodes.INTERNAL_SERVER_ERROR);
     return c.json(
       errorResponse(error.message, StatusCodes.INTERNAL_SERVER_ERROR)

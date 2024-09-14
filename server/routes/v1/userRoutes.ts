@@ -5,6 +5,7 @@ import {
   updateUsername,
   updatePassword,
   updateEmail,
+  getUser,
 } from "../../controller/usercontroller";
 import { zValidator } from "@hono/zod-validator";
 import {
@@ -15,6 +16,7 @@ import {
   updateUserNameSchema,
 } from "../../../schema/userSchema";
 import { authmiddleware } from "../../middleware";
+
 const app = new Hono<{ Variables: { user_id: string } }>();
 
 app.post("/signup", zValidator("json", createUserSchema), async (c) => {
@@ -46,6 +48,10 @@ app.put("/email", zValidator("json", updateEmailSchema), async (c) => {
   const user_id = c.get("user_id");
   const body = { email, user_id };
   return updateEmail(c, body);
+});
+app.get("/", async (c) => {
+  const user_id = c.get("user_id");
+  return getUser(c, user_id);
 });
 
 export default app;

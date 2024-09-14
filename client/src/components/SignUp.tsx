@@ -11,8 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SignInProps } from "@/types/authentication";
-
+import { validateSignup } from "@/validations/UserValidation";
+import { toast } from "@/hooks/use-toast";
+import axios from "axios";
+import { useNavigate } from "@tanstack/react-router";
 const SignUp: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -20,9 +25,40 @@ const SignUp: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
     setIsLogin(!isLogin);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Signup submitted", { email, username, password });
+    const validateSubmission = validateSignup(username, email, password);
+    if (!validateSubmission.success) {
+      validateSubmission.errors.forEach((error: any) =>
+        toast({ title: "Validation Error", description: error.message })
+      );
+      return;
+    }
+    try {
+      const { data } = await axios.post("/api/v1/user/signup", {
+        username,
+        email,
+        password,
+      });
+      toast({
+        title: data?.success ? "Signup Successfull" : "Signup Failed",
+        description:
+          data.message ||
+          (data.success
+            ? "Account has been created"
+            : "Account has not been created"),
+      });
+      if (data.success) {
+        navigate({ to: "/" });
+      }
+    } catch (error: any) {
+      if (error.response) {
+        toast({
+          title: "Signup Error",
+          description: error.response?.data?.message || "Something went wrong",
+        });
+      }
+    }
   };
 
   return (
@@ -79,8 +115,11 @@ const SignUp: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
           <Button className="w-full" onClick={handleSubmit}>
             Sign up
           </Button>
-          <span className="cursor-pointer" onClick={loginToggle}>
-            Already have an account
+          <span className="">
+            Already have an account?{" "}
+            <span className="cursor-pointer underline" onClick={loginToggle}>
+              Login
+            </span>
           </span>
         </div>
       </CardFooter>
