@@ -11,13 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SignInProps } from "@/types/authentication";
-import axios from "axios";
 import { toast } from "@/hooks/use-toast";
-import { validateLogin } from "@/validations/UserValidation";
-import { useNavigate } from "@tanstack/react-router";
+import useUserLogin from "@/hooks/auth/useUserLogin"; // Import the custom hook
+import { useValidation } from "@/hooks/useValidation";
+import { loginUserSchema } from "@schema/userSchema";
 
 const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -25,35 +24,19 @@ const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
     setIsLogin(!isLogin);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { validate } = useValidation(loginUserSchema);
+  const login = useUserLogin();
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validateSubmission = validateLogin(email, password);
+    const validateSubmission = validate({ email, password });
     if (!validateSubmission.success) {
       validateSubmission.errors.forEach((error: any) =>
         toast({ title: "Validation Error", description: error.message })
       );
       return;
     }
-    try {
-      const { data } = await axios.post("/api/v1/user/login", {
-        email,
-        password,
-      });
-      toast({
-        title: data.success ? "Login Successful" : "Login Failed",
-        description:
-          data.message ||
-          (data.success ? "Welcome back!" : "Something went wrong"),
-      });
-      if (data.success) {
-        navigate({ to: "/" });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.response?.data?.message || "Something went wrong",
-      });
-    }
+    login({ email, password });
   };
 
   return (
@@ -100,8 +83,8 @@ const SignIn: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
           <Button className="w-full" onClick={handleSubmit}>
             Sign In
           </Button>
-          <span className="">
-            Not have an account!{" "}
+          <span>
+            Don't have an account?{" "}
             <span className="cursor-pointer underline" onClick={loginToggle}>
               SignUp
             </span>

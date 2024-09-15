@@ -11,54 +11,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SignInProps } from "@/types/authentication";
-import { validateSignup } from "@/validations/UserValidation";
+import { useValidation } from "@/hooks/useValidation";
+import useUserSignup from "@/hooks/auth/useUserSignup";
+import { createUserSchema } from "@schema/userSchema";
 import { toast } from "@/hooks/use-toast";
-import axios from "axios";
-import { useNavigate } from "@tanstack/react-router";
+
 const SignUp: React.FC<SignInProps> = ({ isLogin, setIsLogin }) => {
-  const navigate = useNavigate();
+  const { validate } = useValidation(createUserSchema);
+  const signup = useUserSignup();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const loginToggle = () => {
     setIsLogin(!isLogin);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validateSubmission = validateSignup(username, email, password);
+    const validateSubmission = validate({ username, email, password });
     if (!validateSubmission.success) {
       validateSubmission.errors.forEach((error: any) =>
         toast({ title: "Validation Error", description: error.message })
       );
       return;
     }
-    try {
-      const { data } = await axios.post("/api/v1/user/signup", {
-        username,
-        email,
-        password,
-      });
-      toast({
-        title: data?.success ? "Signup Successfull" : "Signup Failed",
-        description:
-          data.message ||
-          (data.success
-            ? "Account has been created"
-            : "Account has not been created"),
-      });
-      if (data.success) {
-        navigate({ to: "/" });
-      }
-    } catch (error: any) {
-      if (error.response) {
-        toast({
-          title: "Signup Error",
-          description: error.response?.data?.message || "Something went wrong",
-        });
-      }
-    }
+    signup({ username, email, password });
   };
 
   return (
